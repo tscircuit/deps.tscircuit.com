@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'tscircuit Dependency Graph',
-  description: 'Created with v0',
+  description: 'Visualize tscircuit package dependencies',
   generator: 'v0.dev',
 }
 
