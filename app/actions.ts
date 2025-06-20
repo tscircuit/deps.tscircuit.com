@@ -2,6 +2,7 @@
 
 import type { Node, Edge } from "reactflow"
 import semver from "semver"
+import { formatEdgeLabel } from "../lib/formatEdgeLabel"
 
 const GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com"
 
@@ -75,16 +76,6 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   return null
 }
 
-export function formatEdgeLabel(
-  depName: string,
-  requiredRange: string,
-  latestVersion: string,
-  isLatest: boolean,
-): string {
-  return isLatest
-    ? requiredRange
-    : `${depName}\n${requiredRange} / ${latestVersion}`
-}
 
 async function fetchLastPackageJsonUpdate(
   owner: string,

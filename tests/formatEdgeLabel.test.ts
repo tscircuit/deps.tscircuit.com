@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { formatEdgeLabel } from "../app/actions";
+import { formatEdgeLabel } from "../lib/formatEdgeLabel";
 
 test("adds dependency name when not latest", () => {
   const label = formatEdgeLabel("@tscircuit/core", "1.2.0", "1.3.0", false);
