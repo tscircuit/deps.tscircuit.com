@@ -32,6 +32,15 @@ const REPO_URLS = [
   "https://github.com/tscircuit/circuit-json",
   "https://github.com/tscircuit/props",
   "https://github.com/tscircuit/tscircuit-autorouter",
+  "https://github.com/tscircuit/tscircuit.com",
+  "https://github.com/tscircuit/svg.tscircuit.com",
+  "https://github.com/tscircuit/runframe",
+  "https://github.com/tscircuit/eval",
+  "https://github.com/tscircuit/easyeda-converter",
+  "https://github.com/tscircuit/3d-viewer",
+  "https://github.com/tscircuit/schematic-symbols",
+  "https://github.com/tscircuit/jscad-fiber",
+  "https://github.com/tscircuit/jscad-electronics",
 ]
 
 const nodeTypes = {
