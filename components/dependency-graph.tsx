@@ -1,7 +1,19 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import ReactFlow, { Controls, Background, addEdge, type Connection, type Edge, type Node, Panel } from "reactflow"
+import ReactFlow, {
+  Controls,
+  Background,
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  type Connection,
+  type Edge,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
+  Panel,
+} from "reactflow"
 import "reactflow/dist/style.css"
 import dagre from "dagre"
 
@@ -107,6 +119,18 @@ export function DependencyGraph() {
 
   const onConnect = useCallback((params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)), [])
 
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((nds) => applyNodeChanges(changes, nds)),
+    [],
+  )
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [],
+  )
+
   if (isLoading && nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -164,8 +188,8 @@ export function DependencyGraph() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={() => {}}
-          onEdgesChange={() => {}}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
