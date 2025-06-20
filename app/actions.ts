@@ -213,12 +213,26 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
           // If the dependency is one of the tracked packages
           const sourceNodeExists = fetchedRepos.some((r) => r.packageName === depName && !r.error) // Ensure source node (the dependency) exists and is valid
           if (sourceNodeExists) {
+            const requiredVersionRange = allDependencies[depName]
+            const latestAvailableVersion = latestVersionsMap.get(depName)!
+            const isLatest = semver.satisfies(
+              latestAvailableVersion,
+              requiredVersionRange,
+            )
             edges.push({
               id: `e-${depName}-${nodeId}`, // Edge from dependency to current repo
               source: depName, // Source is the dependency package name
               target: nodeId, // Target is the current repo's ID (packageName or fallback)
-              label: allDependencies[depName], // Show required version range on edge
+              label: isLatest
+                ? requiredVersionRange
+                : `${requiredVersionRange} / ${latestAvailableVersion}`,
               animated: status === "STALE_DEPENDENCY", // Animate if the current repo (target) is stale
+              style: {
+                stroke: isLatest ? "#9ca3af" : "#eab308",
+              },
+              labelStyle: {
+                fill: isLatest ? "#9ca3af" : "#eab308",
+              },
             })
           }
         }
