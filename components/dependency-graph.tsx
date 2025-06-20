@@ -19,6 +19,7 @@ import dagre from "dagre"
 
 import { fetchDependencyGraphData, type GraphData, type DisplayNodeData } from "@/app/actions"
 import { CustomGraphNode } from "./custom-graph-node"
+import { SectionNode } from "./section-node"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, LayoutDashboard } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
@@ -38,6 +39,7 @@ const REPO_URLS = [
   "https://github.com/tscircuit/eval",
   "https://github.com/tscircuit/easyeda-converter",
   "https://github.com/tscircuit/3d-viewer",
+  "https://github.com/tscircuit/footprinter",
   "https://github.com/tscircuit/schematic-symbols",
   "https://github.com/tscircuit/jscad-fiber",
   "https://github.com/tscircuit/jscad-electronics",
@@ -45,11 +47,21 @@ const REPO_URLS = [
 
 const nodeTypes = {
   custom: CustomGraphNode,
+  section: SectionNode,
 }
 
 const POLLING_INTERVAL_MS = 60 * 1000 // 1 minute
 const NODE_WIDTH = 256 // From CustomGraphNode's w-64 (16rem)
 const NODE_HEIGHT = 190 // Approximate height of CustomGraphNode
+const SECTION_ORDER = [
+  "Specifications",
+  "Core Utility",
+  "Core",
+  "UI Packages",
+  "Packaged Bundles",
+  "Downstream",
+]
+const SECTION_GAP = NODE_HEIGHT + 120
 
 const dagreGraph = new dagre.graphlib.Graph()
 dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -87,7 +99,35 @@ const getLayoutedElements = (
     }
   })
 
-  return { nodes: layoutedNodes, edges }
+  // Force nodes into section layers
+  const positionedNodes = layoutedNodes.map((node) => {
+    const sectionIndex = SECTION_ORDER.indexOf(node.data.section)
+    const idx = sectionIndex === -1 ? SECTION_ORDER.length - 1 : sectionIndex
+    return {
+      ...node,
+      position: {
+        x: node.position.x,
+        y: idx * SECTION_GAP,
+      },
+    }
+  })
+
+  const sectionNodes: Node[] = SECTION_ORDER.map((section, idx) => {
+    const repos = positionedNodes.filter((n) => n.data.section === section)
+    if (repos.length === 0) return null
+    const xs = repos.map((n) => n.position.x)
+    const x = xs.reduce((a, b) => a + b, 0) / xs.length
+    return {
+      id: `section-${section}`,
+      type: "section",
+      data: { label: section },
+      position: { x, y: idx * SECTION_GAP - 40 },
+      draggable: false,
+      selectable: false,
+    }
+  }).filter(Boolean) as Node[]
+
+  return { nodes: [...positionedNodes, ...sectionNodes], edges }
 }
 
 export function DependencyGraph() {
@@ -168,7 +208,8 @@ export function DependencyGraph() {
   const handleResetLayout = useCallback(() => {
     setIsLayouting(true)
     setNodes((prev) => {
-      const { nodes: layouted } = getLayoutedElements(prev, edges)
+      const repoNodes = prev.filter((n) => n.type === "custom") as Node<DisplayNodeData>[]
+      const { nodes: layouted } = getLayoutedElements(repoNodes, edges)
       lastLayoutNodeIds.current = new Set(layouted.map((n) => n.id))
       return layouted
     })
