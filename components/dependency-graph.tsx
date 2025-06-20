@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import ReactFlow, {
   Controls,
   Background,
@@ -20,7 +20,7 @@ import dagre from "dagre"
 import { fetchDependencyGraphData, type GraphData, type DisplayNodeData } from "@/app/actions"
 import { CustomGraphNode } from "./custom-graph-node"
 import { Button } from "@/components/ui/button"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, LayoutDashboard } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
 
 const REPO_URLS = [
@@ -88,25 +88,48 @@ export function DependencyGraph() {
   const [isLayouting, setIsLayouting] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [userHasMovedNodes, setUserHasMovedNodes] = useState(false)
+  const lastLayoutNodeIds = useRef<Set<string>>(new Set())
 
-  const fetchData = useCallback(async (isInitialLoad = false) => {
-    if (isInitialLoad) setIsLoading(true)
-    setIsLayouting(true)
-    setError(null)
-    try {
-      const data: GraphData = await fetchDependencyGraphData(REPO_URLS)
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(data.nodes, data.edges)
-      setNodes(layoutedNodes)
-      setEdges(layoutedEdges)
-      setLastUpdated(new Date())
-    } catch (err: any) {
-      console.error("Failed to fetch graph data:", err)
-      setError(err.message || "An unknown error occurred while fetching data.")
-    } finally {
-      if (isInitialLoad) setIsLoading(false)
-      setIsLayouting(false)
-    }
-  }, [])
+  const fetchData = useCallback(
+    async (isInitialLoad = false) => {
+      if (isInitialLoad) setIsLoading(true)
+      setIsLayouting(true)
+      setError(null)
+      try {
+        const data: GraphData = await fetchDependencyGraphData(REPO_URLS)
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          data.nodes,
+          data.edges,
+        )
+        const currentIds = new Set(layoutedNodes.map((n) => n.id))
+        const newRepoAdded = Array.from(currentIds).some(
+          (id) => !lastLayoutNodeIds.current.has(id),
+        )
+        if (newRepoAdded || !userHasMovedNodes) {
+          setNodes(layoutedNodes)
+          lastLayoutNodeIds.current = currentIds
+          setUserHasMovedNodes(false)
+        } else {
+          setNodes((prev) =>
+            layoutedNodes.map((node) => {
+              const existing = prev.find((n) => n.id === node.id)
+              return existing ? { ...node, position: existing.position } : node
+            }),
+          )
+        }
+        setEdges(layoutedEdges)
+        setLastUpdated(new Date())
+      } catch (err: any) {
+        console.error("Failed to fetch graph data:", err)
+        setError(err.message || "An unknown error occurred while fetching data.")
+      } finally {
+        if (isInitialLoad) setIsLoading(false)
+        setIsLayouting(false)
+      }
+    },
+    [userHasMovedNodes],
+  )
 
   useEffect(() => {
     fetchData(true) // Initial fetch
@@ -120,17 +143,29 @@ export function DependencyGraph() {
 
   const onConnect = useCallback((params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)), [])
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) =>
-      setNodes((nds) => applyNodeChanges(changes, nds)),
-    [],
-  )
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    if (changes.some((c) => c.type === "position")) {
+      setUserHasMovedNodes(true)
+    }
+    setNodes((nds) => applyNodeChanges(changes, nds))
+  }, [])
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) =>
       setEdges((eds) => applyEdgeChanges(changes, eds)),
     [],
   )
+
+  const handleResetLayout = useCallback(() => {
+    setIsLayouting(true)
+    setNodes((prev) => {
+      const { nodes: layouted } = getLayoutedElements(prev, edges)
+      lastLayoutNodeIds.current = new Set(layouted.map((n) => n.id))
+      return layouted
+    })
+    setUserHasMovedNodes(false)
+    setIsLayouting(false)
+  }, [edges])
 
   if (isLoading && nodes.length === 0) {
     return (
@@ -174,6 +209,16 @@ export function DependencyGraph() {
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading || isLayouting ? "animate-spin" : ""}`} />
             Refresh
+          </Button>
+          <Button
+            onClick={handleResetLayout}
+            variant="outline"
+            size="sm"
+            disabled={isLayouting}
+            className="bg-background text-foreground hover:bg-accent"
+          >
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Reset Layout
           </Button>
         </div>
       </div>
