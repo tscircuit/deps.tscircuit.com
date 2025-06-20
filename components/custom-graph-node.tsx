@@ -7,10 +7,33 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
 import type { DisplayNodeData } from "@/app/actions" // Ensure this path is correct
+import { useEffect, useState } from "react"
+
+function formatTimeAgo(dateString: string) {
+  const diff = Date.now() - new Date(dateString).getTime()
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d`
+}
 
 export function CustomGraphNode({ data }: NodeProps<DisplayNodeData>) {
   let statusIcon
   let statusColorClass = ""
+
+  const [timeAgo, setTimeAgo] = useState(
+    data.packageJsonLastUpdated ? formatTimeAgo(data.packageJsonLastUpdated) : ""
+  )
+
+  useEffect(() => {
+    if (!data.packageJsonLastUpdated) return
+    const id = setInterval(() => {
+      setTimeAgo(formatTimeAgo(data.packageJsonLastUpdated!))
+    }, 60000)
+    return () => clearInterval(id)
+  }, [data.packageJsonLastUpdated])
 
   switch (data.status) {
     case "UP_TO_DATE":
@@ -55,19 +78,15 @@ export function CustomGraphNode({ data }: NodeProps<DisplayNodeData>) {
           Repo: {data.repoName}
         </p>
       </CardContent>
-      <CardFooter className="flex justify-between pt-2">
-        {data.rawPackageJsonUrl && (
-          <Button variant="outline" size="sm" asChild className="bg-background text-foreground hover:bg-accent">
-            <a href={data.rawPackageJsonUrl} target="_blank" rel="noopener noreferrer">
-              package.json <ExternalLink className="ml-1 h-3 w-3" />
-            </a>
-          </Button>
-        )}
+      <CardFooter className="flex justify-between items-center pt-2">
         <Button variant="outline" size="sm" asChild className="bg-background text-foreground hover:bg-accent">
           <a href={data.url} target="_blank" rel="noopener noreferrer">
             GitHub <ExternalLink className="ml-1 h-3 w-3" />
           </a>
         </Button>
+        {data.packageJsonLastUpdated && (
+          <span className="text-xs text-muted-foreground">Last Update: {timeAgo}</span>
+        )}
       </CardFooter>
       <Handle type="source" position={Position.Bottom} className="!bg-slate-500" />
     </Card>

@@ -13,6 +13,7 @@ export interface DisplayNodeData {
   rawPackageJsonUrl?: string // URL to the raw package.json
   error?: string // Error message if status is ERROR
   repoName: string // Extracted repository name
+  packageJsonLastUpdated?: string // ISO timestamp of last package.json commit
 }
 
 export interface GraphData {
@@ -29,6 +30,7 @@ interface FetchedRepoInfo {
   owner: string
   repoName: string
   rawPackageJsonUrl?: string
+  packageJsonLastUpdated?: string
   error?: string
 }
 
@@ -73,6 +75,27 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   return null
 }
 
+async function fetchLastPackageJsonUpdate(
+  owner: string,
+  repo: string,
+): Promise<string | null> {
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?path=package.json&page=1&per_page=1`
+  try {
+    const res = await fetch(apiUrl, {
+      headers: { Accept: "application/vnd.github+json" },
+      next: { revalidate: 0 },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0].commit.committer.date
+    }
+  } catch (e) {
+    console.error("Failed to fetch last package.json update", e)
+  }
+  return null
+}
+
 export async function fetchDependencyGraphData(repoUrls: string[]): Promise<GraphData> {
   const fetchedRepos: FetchedRepoInfo[] = await Promise.all(
     repoUrls.map(async (url) => {
@@ -91,6 +114,7 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
       const packageJson = result.data
       const branch = result.branch
       const rawPackageJsonUrl = `${GITHUB_RAW_BASE_URL}/${owner}/${repoName}/${branch}/package.json`
+      const packageJsonLastUpdated = await fetchLastPackageJsonUpdate(owner, repoName)
 
       if (!packageJson.name || !packageJson.version) {
         return {
@@ -111,6 +135,7 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
         owner,
         repoName,
         rawPackageJsonUrl,
+        packageJsonLastUpdated: packageJsonLastUpdated || undefined,
       }
     }),
   )
@@ -174,6 +199,7 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
         status,
         url: repo.githubUrl,
         rawPackageJsonUrl: repo.rawPackageJsonUrl,
+        packageJsonLastUpdated: repo.packageJsonLastUpdated,
         error: nodeError,
         repoName: repo.repoName,
       },
