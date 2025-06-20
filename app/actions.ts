@@ -75,6 +75,17 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   return null
 }
 
+export function formatEdgeLabel(
+  depName: string,
+  requiredRange: string,
+  latestVersion: string,
+  isLatest: boolean,
+): string {
+  return isLatest
+    ? requiredRange
+    : `${depName}\n${requiredRange} / ${latestVersion}`
+}
+
 async function fetchLastPackageJsonUpdate(
   owner: string,
   repo: string,
@@ -223,9 +234,12 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
               id: `e-${depName}-${nodeId}`, // Edge from dependency to current repo
               source: depName, // Source is the dependency package name
               target: nodeId, // Target is the current repo's ID (packageName or fallback)
-              label: isLatest
-                ? requiredVersionRange
-                : `${requiredVersionRange} / ${latestAvailableVersion}`,
+              label: formatEdgeLabel(
+                depName,
+                requiredVersionRange,
+                latestAvailableVersion,
+                isLatest,
+              ),
               animated: status === "STALE_DEPENDENCY", // Animate if the current repo (target) is stale
               style: {
                 stroke: isLatest ? "#9ca3af" : "#eab308",
