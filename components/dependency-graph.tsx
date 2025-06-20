@@ -1,0 +1,176 @@
+"use client"
+
+import { useCallback, useEffect, useState } from "react"
+import ReactFlow, { Controls, Background, addEdge, type Connection, type Edge, type Node, Panel } from "reactflow"
+import "reactflow/dist/style.css"
+import dagre from "dagre"
+
+import { fetchDependencyGraphData, type GraphData, type DisplayNodeData } from "@/app/actions"
+import { CustomGraphNode } from "./custom-graph-node"
+import { Button } from "@/components/ui/button"
+import { RefreshCw } from "lucide-react"
+import { LoadingSpinner } from "./loading-spinner"
+
+const REPO_URLS = [
+  "https://github.com/tscircuit/tscircuit",
+  "https://github.com/tscircuit/core",
+  "https://github.com/tscircuit/schematic-viewer",
+  "https://github.com/tscircuit/circuit-to-svg",
+  "https://github.com/tscircuit/pcb-viewer",
+  "https://github.com/tscircuit/circuit-json",
+  "https://github.com/tscircuit/props",
+]
+
+const nodeTypes = {
+  custom: CustomGraphNode,
+}
+
+const POLLING_INTERVAL_MS = 60 * 1000 // 1 minute
+const NODE_WIDTH = 256 // From CustomGraphNode's w-64 (16rem)
+const NODE_HEIGHT = 190 // Approximate height of CustomGraphNode
+
+const dagreGraph = new dagre.graphlib.Graph()
+dagreGraph.setDefaultEdgeLabel(() => ({}))
+
+const getLayoutedElements = (
+  nodes: Node<DisplayNodeData>[],
+  edges: Edge[],
+  direction = "TB", // Top-to-Bottom layout
+) => {
+  dagreGraph.setGraph({
+    rankdir: "TB", // Revert to "TB" (Top-to-Bottom)
+    nodesep: 100, // Increased separation
+    ranksep: 120, // Increased separation
+  })
+
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
+  })
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target)
+  })
+
+  dagre.layout(dagreGraph)
+
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id)
+    return {
+      ...node,
+      // Position is at the center of the node, adjust to top-left for React Flow
+      position: {
+        x: nodeWithPosition.x - NODE_WIDTH / 2,
+        y: nodeWithPosition.y - NODE_HEIGHT / 2,
+      },
+    }
+  })
+
+  return { nodes: layoutedNodes, edges }
+}
+
+export function DependencyGraph() {
+  const [nodes, setNodes] = useState<Node<DisplayNodeData>[]>([])
+  const [edges, setEdges] = useState<Edge[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLayouting, setIsLayouting] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = useCallback(async (isInitialLoad = false) => {
+    if (isInitialLoad) setIsLoading(true)
+    setIsLayouting(true)
+    setError(null)
+    try {
+      const data: GraphData = await fetchDependencyGraphData(REPO_URLS)
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(data.nodes, data.edges)
+      setNodes(layoutedNodes)
+      setEdges(layoutedEdges)
+      setLastUpdated(new Date())
+    } catch (err: any) {
+      console.error("Failed to fetch graph data:", err)
+      setError(err.message || "An unknown error occurred while fetching data.")
+    } finally {
+      if (isInitialLoad) setIsLoading(false)
+      setIsLayouting(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData(true) // Initial fetch
+
+    const intervalId = setInterval(() => {
+      fetchData()
+    }, POLLING_INTERVAL_MS)
+
+    return () => clearInterval(intervalId) // Cleanup on unmount
+  }, [fetchData])
+
+  const onConnect = useCallback((params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)), [])
+
+  if (isLoading && nodes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <LoadingSpinner size={48} />
+        <p className="mt-4 text-lg text-muted-foreground">Loading dependency graph...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full h-screen flex flex-col">
+      <div className="p-4 border-b flex justify-between items-center bg-background">
+        <div>
+          <h1 className="text-xl font-semibold">tscircuit Dependency Status</h1>
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+              {(isLoading || isLayouting) && <LoadingSpinner className="inline ml-2 h-3 w-3" size={12} />}
+            </p>
+          )}
+        </div>
+        <Button
+          onClick={() => fetchData(true)}
+          variant="outline"
+          size="sm"
+          disabled={isLoading || isLayouting}
+          className="bg-background text-foreground hover:bg-accent"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading || isLayouting ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+      {error && (
+        <div className="p-4 bg-red-100 text-red-700 border-b border-red-300">
+          <p>
+            <strong>Error:</strong> {error}
+          </p>
+          <p>Displaying potentially stale data. Please try refreshing.</p>
+        </div>
+      )}
+      <div className="flex-grow">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={() => {}}
+          onEdgesChange={() => {}}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.2 }} // Add some padding around the fitted view
+          attributionPosition="bottom-left"
+        >
+          <Controls />
+          <Background />
+          {(isLoading || isLayouting) && (
+            <Panel position="top-center">
+              <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-md shadow-md text-sm flex items-center">
+                <LoadingSpinner size={16} className="mr-2" />
+                {isLoading ? "Fetching data..." : "Applying layout..."}
+              </div>
+            </Panel>
+          )}
+        </ReactFlow>
+      </div>
+    </div>
+  )
+}
