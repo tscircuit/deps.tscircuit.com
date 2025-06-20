@@ -128,16 +128,29 @@ export function DependencyGraph() {
             </p>
           )}
         </div>
-        <Button
-          onClick={() => fetchData(true)}
-          variant="outline"
-          size="sm"
-          disabled={isLoading || isLayouting}
-          className="bg-background text-foreground hover:bg-accent"
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading || isLayouting ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href="https://github.com/tscircuit/deps.tscircuit.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://img.shields.io/badge/GitHub-repo-blue?logo=github"
+              alt="GitHub repo"
+              className="h-6"
+            />
+          </a>
+          <Button
+            onClick={() => fetchData(true)}
+            variant="outline"
+            size="sm"
+            disabled={isLoading || isLayouting}
+            className="bg-background text-foreground hover:bg-accent"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading || isLayouting ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
       {error && (
         <div className="p-4 bg-red-100 text-red-700 border-b border-red-300">
