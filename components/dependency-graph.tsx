@@ -120,7 +120,7 @@ export function DependencyGraph() {
     <div className="w-full h-screen flex flex-col">
       <div className="p-4 border-b flex justify-between items-center bg-background">
         <div>
-          <h1 className="text-xl font-semibold">tscircuit Dependency Status</h1>
+          <h1 className="text-xl font-semibold">tscircuit Dependency Graph</h1>
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">
               Last updated: {lastUpdated.toLocaleTimeString()}
