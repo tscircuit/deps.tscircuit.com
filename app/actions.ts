@@ -2,6 +2,7 @@
 
 import type { Node, Edge } from "reactflow"
 import semver from "semver"
+import { formatEdgeLabel } from "../lib/formatEdgeLabel"
 
 const GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com"
 
@@ -74,6 +75,7 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   }
   return null
 }
+
 
 async function fetchLastPackageJsonUpdate(
   owner: string,
@@ -223,9 +225,12 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
               id: `e-${depName}-${nodeId}`, // Edge from dependency to current repo
               source: depName, // Source is the dependency package name
               target: nodeId, // Target is the current repo's ID (packageName or fallback)
-              label: isLatest
-                ? requiredVersionRange
-                : `${requiredVersionRange} / ${latestAvailableVersion}`,
+              label: formatEdgeLabel(
+                depName,
+                requiredVersionRange,
+                latestAvailableVersion,
+                isLatest,
+              ),
               animated: status === "STALE_DEPENDENCY", // Animate if the current repo (target) is stale
               style: {
                 stroke: isLatest ? "#9ca3af" : "#eab308",
