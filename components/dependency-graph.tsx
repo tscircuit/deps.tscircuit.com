@@ -19,6 +19,7 @@ const REPO_URLS = [
   "https://github.com/tscircuit/pcb-viewer",
   "https://github.com/tscircuit/circuit-json",
   "https://github.com/tscircuit/props",
+  "https://github.com/tscircuit/tscircuit-autorouter",
 ]
 
 const nodeTypes = {
