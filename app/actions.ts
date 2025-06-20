@@ -3,6 +3,7 @@
 import type { Node, Edge } from "reactflow"
 import semver from "semver"
 import { formatEdgeLabel } from "../lib/formatEdgeLabel"
+import { getEdgeColor } from "../lib/getEdgeColor"
 
 const GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com"
 
@@ -221,6 +222,10 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
               latestAvailableVersion,
               requiredVersionRange,
             )
+            const color = getEdgeColor(
+              requiredVersionRange,
+              latestAvailableVersion,
+            )
             edges.push({
               id: `e-${depName}-${nodeId}`, // Edge from dependency to current repo
               source: depName, // Source is the dependency package name
@@ -233,10 +238,10 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
               ),
               animated: status === "STALE_DEPENDENCY", // Animate if the current repo (target) is stale
               style: {
-                stroke: isLatest ? "#9ca3af" : "#eab308",
+                stroke: color,
               },
               labelStyle: {
-                fill: isLatest ? "#9ca3af" : "#eab308",
+                fill: color,
               },
             })
           }
