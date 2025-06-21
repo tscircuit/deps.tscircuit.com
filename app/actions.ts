@@ -4,6 +4,7 @@ import type { Node, Edge } from "reactflow"
 import semver from "semver"
 import { formatEdgeLabel } from "../lib/formatEdgeLabel"
 import { getEdgeColor } from "../lib/getEdgeColor"
+import { getCategoryForPackage } from "../lib/categories"
 
 const GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com"
 
@@ -12,6 +13,7 @@ export interface DisplayNodeData {
   version: string // its own current version
   status: "UP_TO_DATE" | "STALE_DEPENDENCY" | "ERROR" | "LOADING"
   url: string // GitHub URL to the repo
+  category: string // Package category
   rawPackageJsonUrl?: string // URL to the raw package.json
   error?: string // Error message if status is ERROR
   repoName: string // Extracted repository name
@@ -206,6 +208,10 @@ export async function fetchDependencyGraphData(
         label: repo.packageName || repo.repoName,
         version: repo.packageVersion || "N/A",
         status,
+        category: getCategoryForPackage(
+          repo.packageName || "",
+          repo.repoName,
+        ),
         url: repo.githubUrl,
         rawPackageJsonUrl: repo.rawPackageJsonUrl,
         packageJsonLastUpdated: repo.packageJsonLastUpdated,

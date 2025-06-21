@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
 import type { DisplayNodeData } from "@/app/actions" // Ensure this path is correct
+import { CATEGORY_COLORS } from "@/lib/categories"
 import { useEffect, useState } from "react"
 
 function formatTimeAgo(dateString: string) {
@@ -82,6 +83,7 @@ export function CustomGraphNode({ data }: NodeProps<DisplayNodeData>) {
         <p className="truncate" title={data.repoName}>
           Repo: {data.repoName}
         </p>
+        <Badge className={`mt-1 ${CATEGORY_COLORS[data.category] || ''}`}>{data.category}</Badge>
       </CardContent>
       <CardFooter className="flex justify-between items-center pt-2">
         <Button variant="outline" size="sm" asChild className="bg-background text-foreground hover:bg-accent">

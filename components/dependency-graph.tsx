@@ -29,6 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ALL_CATEGORIES } from "@/lib/categories"
 
 const REPO_URLS = [
   "https://github.com/tscircuit/tscircuit",
@@ -107,6 +114,9 @@ export function DependencyGraph() {
   const [userHasMovedNodes, setUserHasMovedNodes] = useState(false)
   const lastLayoutNodeIds = useRef<Set<string>>(new Set())
   const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("peer")
+  const [visibleCategories, setVisibleCategories] = useState<string[]>(
+    ALL_CATEGORIES.filter((c) => c !== "Downstream"),
+  )
 
   const fetchData = useCallback(
     async (isInitialLoad = false) => {
@@ -196,6 +206,14 @@ export function DependencyGraph() {
     )
   }
 
+  const visibleNodes = nodes.filter((n) =>
+    visibleCategories.includes(n.data.category),
+  )
+  const visibleNodeIds = new Set(visibleNodes.map((n) => n.id))
+  const visibleEdges = edges.filter(
+    (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target),
+  )
+
   return (
     <div className="w-full h-screen flex flex-col">
       <div className="p-4 border-b flex justify-between items-center bg-background">
@@ -221,6 +239,30 @@ export function DependencyGraph() {
               <SelectItem value="all">Any Dependency</SelectItem>
             </SelectContent>
           </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="bg-background text-foreground hover:bg-accent">
+                Categories
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              {ALL_CATEGORIES.map((cat) => (
+                <DropdownMenuCheckboxItem
+                  key={cat}
+                  checked={visibleCategories.includes(cat)}
+                  onCheckedChange={(checked) =>
+                    setVisibleCategories((prev) =>
+                      checked
+                        ? [...prev, cat]
+                        : prev.filter((c) => c !== cat),
+                    )
+                  }
+                >
+                  {cat}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <a
             href="https://github.com/tscircuit/deps.tscircuit.com"
             target="_blank"
@@ -264,8 +306,8 @@ export function DependencyGraph() {
       )}
       <div className="flex-grow">
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={visibleNodes}
+          edges={visibleEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
