@@ -41,8 +41,13 @@ export function CustomGraphNode({ data }: NodeProps<DisplayNodeData>) {
       statusColorClass = "border-green-500"
       break
     case "STALE_DEPENDENCY":
-      statusIcon = <LoadingSpinner className="h-5 w-5 text-yellow-500" />
-      statusColorClass = "border-yellow-500"
+      if (data.worstEdgeColor === "#ef4444") {
+        statusIcon = <LoadingSpinner className="h-5 w-5 text-red-500" />
+        statusColorClass = "border-red-500"
+      } else {
+        statusIcon = <LoadingSpinner className="h-5 w-5 text-yellow-500" />
+        statusColorClass = "border-yellow-500"
+      }
       break
     case "ERROR":
       statusIcon = <XCircle className="h-5 w-5 text-red-500" />

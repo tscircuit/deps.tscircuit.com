@@ -16,6 +16,7 @@ export interface DisplayNodeData {
   error?: string // Error message if status is ERROR
   repoName: string // Extracted repository name
   packageJsonLastUpdated?: string // ISO timestamp of last package.json commit
+  worstEdgeColor?: string // Color derived from the worst incoming edge
 }
 
 export interface GraphData {
@@ -247,6 +248,37 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
           }
         }
       }
+    }
+  })
+
+  const colorSeverity = (color: string) => {
+    switch (color) {
+      case "#ef4444":
+        return 2
+      case "#eab308":
+        return 1
+      default:
+        return 0
+    }
+  }
+
+  const worstEdgeColorMap = new Map<string, string>()
+
+  edges.forEach((edge) => {
+    const color = (edge.style as any)?.stroke as string | undefined
+    if (!color) return
+    const prev = worstEdgeColorMap.get(edge.target)
+    if (!prev || colorSeverity(color) > colorSeverity(prev)) {
+      worstEdgeColorMap.set(edge.target, color)
+    }
+  })
+
+  nodes.forEach((node) => {
+    const color = worstEdgeColorMap.get(node.id)
+    if (!color || color === "#9ca3af" || color === "#3b82f6") {
+      node.data.worstEdgeColor = "#22c55e" // green
+    } else {
+      node.data.worstEdgeColor = color
     }
   })
 
