@@ -11,6 +11,12 @@ test("maps jscad-electronics to UI Packages", () => {
   )
 })
 
+test("maps parts-engine to Core Utility", () => {
+  expect(
+    getCategoryForPackage("@tscircuit/parts-engine", "parts-engine"),
+  ).toBe("Core Utility")
+})
+
 test("maps tscircuit to Packaged Bundles", () => {
   expect(getCategoryForPackage("tscircuit", "tscircuit")).toBe("Packaged Bundles")
 })
