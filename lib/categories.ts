@@ -14,6 +14,7 @@ export const PACKAGE_CATEGORY_MAP: Record<string, string> = {
   "@tscircuit/runframe": "Packaged Bundles",
   "@tscircuit/parts-engine": "Core Utility",
   "parts-engine": "Core Utility",
+  "tscircuit/checks": "Core Utility",
   tscircuit: "Packaged Bundles",
 }
 

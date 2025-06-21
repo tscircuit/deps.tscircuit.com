@@ -17,6 +17,12 @@ test("maps parts-engine to Core Utility", () => {
   ).toBe("Core Utility")
 })
 
+test("maps tscircuit/checks to Core Utility", () => {
+  expect(
+    getCategoryForPackage("tscircuit/checks", "tscircuit/checks"),
+  ).toBe("Core Utility")
+})
+
 test("maps tscircuit to Packaged Bundles", () => {
   expect(getCategoryForPackage("tscircuit", "tscircuit")).toBe("Packaged Bundles")
 })
