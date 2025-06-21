@@ -5,13 +5,14 @@ export const PACKAGE_CATEGORY_MAP: Record<string, string> = {
   "@tscircuit/footprinter": "Specifications",
   "jscad-fiber": "Specifications",
   "circuit-to-svg": "Core Utility",
-  "jscad-electronics": "Core Utility",
+  "jscad-electronics": "UI Packages",
   "@tscircuit/core": "Core",
   "@tscircuit/schematic-viewer": "UI Packages",
   "@tscircuit/pcb-viewer": "UI Packages",
   "@tscircuit/3d-viewer": "UI Packages",
   "@tscircuit/eval": "Packaged Bundles",
   "@tscircuit/runframe": "Packaged Bundles",
+  tscircuit: "Packaged Bundles",
 }
 
 export const ALL_CATEGORIES = [
