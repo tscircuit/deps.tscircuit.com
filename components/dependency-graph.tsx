@@ -115,7 +115,9 @@ export function DependencyGraph() {
   const lastLayoutNodeIds = useRef<Set<string>>(new Set())
   const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("peer")
   const [visibleCategories, setVisibleCategories] = useState<string[]>(
-    ALL_CATEGORIES.filter((c) => c !== "Downstream"),
+    ALL_CATEGORIES.filter(
+      (c) => c !== "Downstream" && c !== "UI Packages",
+    ),
   )
 
   const fetchData = useCallback(
