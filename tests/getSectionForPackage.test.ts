@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { getSectionForPackage } from "../app/actions"
+import { getSectionForPackage } from "../lib/sections"
 
 const cases: [string, string][] = [
   ["circuit-json", "Specifications"],
