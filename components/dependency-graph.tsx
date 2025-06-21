@@ -22,6 +22,13 @@ import { CustomGraphNode } from "./custom-graph-node"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, LayoutDashboard } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const REPO_URLS = [
   "https://github.com/tscircuit/tscircuit",
@@ -99,6 +106,7 @@ export function DependencyGraph() {
   const [error, setError] = useState<string | null>(null)
   const [userHasMovedNodes, setUserHasMovedNodes] = useState(false)
   const lastLayoutNodeIds = useRef<Set<string>>(new Set())
+  const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("peer")
 
   const fetchData = useCallback(
     async (isInitialLoad = false) => {
@@ -106,7 +114,10 @@ export function DependencyGraph() {
       setIsLayouting(true)
       setError(null)
       try {
-        const data: GraphData = await fetchDependencyGraphData(REPO_URLS)
+        const data: GraphData = await fetchDependencyGraphData(
+          REPO_URLS,
+          dependencyMode === "peer",
+        )
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           data.nodes,
           data.edges,
@@ -137,7 +148,7 @@ export function DependencyGraph() {
         setIsLayouting(false)
       }
     },
-    [userHasMovedNodes],
+    [userHasMovedNodes, dependencyMode],
   )
 
   useEffect(() => {
@@ -198,6 +209,18 @@ export function DependencyGraph() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Select
+            value={dependencyMode}
+            onValueChange={(v) => setDependencyMode(v as "peer" | "all")}
+          >
+            <SelectTrigger className="w-40 bg-background text-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="peer">Peer Dependencies</SelectItem>
+              <SelectItem value="all">Any Dependency</SelectItem>
+            </SelectContent>
+          </Select>
           <a
             href="https://github.com/tscircuit/deps.tscircuit.com"
             target="_blank"

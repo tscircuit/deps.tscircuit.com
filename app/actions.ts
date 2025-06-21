@@ -101,7 +101,10 @@ async function fetchLastPackageJsonUpdate(
   return null
 }
 
-export async function fetchDependencyGraphData(repoUrls: string[]): Promise<GraphData> {
+export async function fetchDependencyGraphData(
+  repoUrls: string[],
+  onlyPeerDependencies = true,
+): Promise<GraphData> {
   const fetchedRepos: FetchedRepoInfo[] = await Promise.all(
     repoUrls.map(async (url) => {
       const parsed = parseGitHubUrl(url)
@@ -216,8 +219,9 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
       const allDependencies = { ...repo.dependencies, ...repo.devDependencies }
       const peerDeps = repo.peerDependencies || {}
       for (const depName in allDependencies) {
-        if (latestVersionsMap.has(depName) && depName in peerDeps) {
-          // If the dependency is one of the tracked packages and declared as a peer dependency
+        const included = onlyPeerDependencies ? depName in peerDeps : true
+        if (latestVersionsMap.has(depName) && included) {
+          // If the dependency is one of the tracked packages and meets the filter
           const sourceNodeExists = fetchedRepos.some(
             (r) => r.packageName === depName && !r.error,
           ) // Ensure source node (the dependency) exists and is valid
