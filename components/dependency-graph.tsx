@@ -30,6 +30,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+interface GraphNodeData extends DisplayNodeData {
+  onFocus?: (id: string) => void
+}
+
 const REPO_URLS = [
   "https://github.com/tscircuit/tscircuit",
   "https://github.com/tscircuit/core",
@@ -62,7 +66,7 @@ const dagreGraph = new dagre.graphlib.Graph()
 dagreGraph.setDefaultEdgeLabel(() => ({}))
 
 const getLayoutedElements = (
-  nodes: Node<DisplayNodeData>[],
+  nodes: Node<GraphNodeData>[],
   edges: Edge[],
   direction = "TB", // Top-to-Bottom layout
 ) => {
@@ -98,7 +102,7 @@ const getLayoutedElements = (
 }
 
 export function DependencyGraph() {
-  const [nodes, setNodes] = useState<Node<DisplayNodeData>[]>([])
+  const [nodes, setNodes] = useState<Node<GraphNodeData>[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLayouting, setIsLayouting] = useState(false)
@@ -107,6 +111,13 @@ export function DependencyGraph() {
   const [userHasMovedNodes, setUserHasMovedNodes] = useState(false)
   const lastLayoutNodeIds = useRef<Set<string>>(new Set())
   const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("peer")
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null)
+
+  const handleFocus = useCallback((id: string) => {
+    setFocusedNodeId(id)
+  }, [])
+
+  const clearFocus = useCallback(() => setFocusedNodeId(null), [])
 
   const fetchData = useCallback(
     async (isInitialLoad = false) => {
@@ -119,20 +130,24 @@ export function DependencyGraph() {
           dependencyMode === "peer",
         )
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          data.nodes,
+          data.nodes as Node<GraphNodeData>[],
           data.edges,
         )
+        const layoutedNodesWithFocus = layoutedNodes.map((node) => ({
+          ...node,
+          data: { ...node.data, onFocus: handleFocus },
+        }))
         const currentIds = new Set(layoutedNodes.map((n) => n.id))
         const newRepoAdded = Array.from(currentIds).some(
           (id) => !lastLayoutNodeIds.current.has(id),
         )
         if (newRepoAdded || !userHasMovedNodes) {
-          setNodes(layoutedNodes)
+          setNodes(layoutedNodesWithFocus)
           lastLayoutNodeIds.current = currentIds
           setUserHasMovedNodes(false)
         } else {
           setNodes((prev) =>
-            layoutedNodes.map((node) => {
+            layoutedNodesWithFocus.map((node) => {
               const existing = prev.find((n) => n.id === node.id)
               return existing ? { ...node, position: existing.position } : node
             }),
@@ -148,7 +163,7 @@ export function DependencyGraph() {
         setIsLayouting(false)
       }
     },
-    [userHasMovedNodes, dependencyMode],
+    [userHasMovedNodes, dependencyMode, handleFocus],
   )
 
   useEffect(() => {
@@ -181,11 +196,18 @@ export function DependencyGraph() {
     setNodes((prev) => {
       const { nodes: layouted } = getLayoutedElements(prev, edges)
       lastLayoutNodeIds.current = new Set(layouted.map((n) => n.id))
-      return layouted
+      return layouted.map((node) => ({
+        ...node,
+        data: { ...node.data, onFocus: handleFocus },
+      }))
     })
     setUserHasMovedNodes(false)
     setIsLayouting(false)
-  }, [edges])
+  }, [edges, handleFocus])
+
+  const displayEdges = focusedNodeId
+    ? edges.filter((e) => e.source === focusedNodeId || e.target === focusedNodeId)
+    : edges
 
   if (isLoading && nodes.length === 0) {
     return (
@@ -252,6 +274,16 @@ export function DependencyGraph() {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Reset Layout
           </Button>
+          {focusedNodeId && (
+            <Button
+              onClick={clearFocus}
+              variant="outline"
+              size="sm"
+              className="bg-background text-foreground hover:bg-accent"
+            >
+              Clear Focus
+            </Button>
+          )}
         </div>
       </div>
       {error && (
@@ -265,7 +297,7 @@ export function DependencyGraph() {
       <div className="flex-grow">
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={displayEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
