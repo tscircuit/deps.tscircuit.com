@@ -29,6 +29,7 @@ interface FetchedRepoInfo {
   packageVersion?: string
   dependencies?: { [key: string]: string }
   devDependencies?: { [key: string]: string }
+  peerDependencies?: { [key: string]: string }
   githubUrl: string
   owner: string
   repoName: string
@@ -100,7 +101,10 @@ async function fetchLastPackageJsonUpdate(
   return null
 }
 
-export async function fetchDependencyGraphData(repoUrls: string[]): Promise<GraphData> {
+export async function fetchDependencyGraphData(
+  repoUrls: string[],
+  onlyPeerDependencies = true,
+): Promise<GraphData> {
   const fetchedRepos: FetchedRepoInfo[] = await Promise.all(
     repoUrls.map(async (url) => {
       const parsed = parseGitHubUrl(url)
@@ -134,7 +138,8 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
         packageName: packageJson.name,
         packageVersion: packageJson.version,
         dependencies: packageJson.dependencies || {},
-        devDependencies: packageJson.devDependencies || {}, // Consider devDependencies too if needed
+        devDependencies: packageJson.devDependencies || {},
+        peerDependencies: packageJson.peerDependencies || {},
         githubUrl: url,
         owner,
         repoName,
@@ -212,10 +217,14 @@ export async function fetchDependencyGraphData(repoUrls: string[]): Promise<Grap
     // Create edges
     if (repo.packageName && !repo.error) {
       const allDependencies = { ...repo.dependencies, ...repo.devDependencies }
+      const peerDeps = repo.peerDependencies || {}
       for (const depName in allDependencies) {
-        if (latestVersionsMap.has(depName)) {
-          // If the dependency is one of the tracked packages
-          const sourceNodeExists = fetchedRepos.some((r) => r.packageName === depName && !r.error) // Ensure source node (the dependency) exists and is valid
+        const included = onlyPeerDependencies ? depName in peerDeps : true
+        if (latestVersionsMap.has(depName) && included) {
+          // If the dependency is one of the tracked packages and meets the filter
+          const sourceNodeExists = fetchedRepos.some(
+            (r) => r.packageName === depName && !r.error,
+          ) // Ensure source node (the dependency) exists and is valid
           if (sourceNodeExists) {
             const requiredVersionRange = allDependencies[depName]
             const latestAvailableVersion = latestVersionsMap.get(depName)!
