@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
 import type { DisplayNodeData } from "@/app/actions" // Ensure this path is correct
+
+interface GraphNodeData extends DisplayNodeData {
+  onFocus?: (id: string) => void
+}
 import { useEffect, useState } from "react"
 
 function formatTimeAgo(dateString: string) {
@@ -19,7 +23,7 @@ function formatTimeAgo(dateString: string) {
   return `${days}d`
 }
 
-export function CustomGraphNode({ data }: NodeProps<DisplayNodeData>) {
+export function CustomGraphNode({ data, id }: NodeProps<GraphNodeData>) {
   let statusIcon
   let statusColorClass = ""
 
@@ -89,9 +93,17 @@ export function CustomGraphNode({ data }: NodeProps<DisplayNodeData>) {
             GitHub <ExternalLink className="ml-1 h-3 w-3" />
           </a>
         </Button>
-        {data.packageJsonLastUpdated && (
-          <span className="text-xs text-muted-foreground">Last Update: {timeAgo}</span>
-        )}
+        <div className="flex items-center gap-2">
+          {data.packageJsonLastUpdated && (
+            <span className="text-xs text-muted-foreground">Last Update: {timeAgo}</span>
+          )}
+          <button
+            onClick={() => data.onFocus?.(id)}
+            className="text-xs text-blue-500 underline"
+          >
+            Focus
+          </button>
+        </div>
       </CardFooter>
       <Handle type="source" position={Position.Bottom} className="!bg-slate-500" />
     </Card>
