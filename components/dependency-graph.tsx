@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useState, useRef, useMemo } from "react"
 import ReactFlow, {
   Controls,
   Background,
@@ -209,6 +209,19 @@ export function DependencyGraph() {
     ? edges.filter((e) => e.source === focusedNodeId || e.target === focusedNodeId)
     : edges
 
+  const displayNodes = useMemo(() => {
+    if (!focusedNodeId) return nodes
+    const connected = new Set<string>([focusedNodeId])
+    edges.forEach((e) => {
+      if (e.source === focusedNodeId) connected.add(e.target)
+      if (e.target === focusedNodeId) connected.add(e.source)
+    })
+    return nodes.map((node) => ({
+      ...node,
+      style: { ...(node.style || {}), opacity: connected.has(node.id) ? 1 : 0.5 },
+    }))
+  }, [nodes, edges, focusedNodeId])
+
   if (isLoading && nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -281,7 +294,7 @@ export function DependencyGraph() {
               size="sm"
               className="bg-background text-foreground hover:bg-accent"
             >
-              Clear Focus
+              Unfocus
             </Button>
           )}
         </div>
@@ -296,7 +309,7 @@ export function DependencyGraph() {
       )}
       <div className="flex-grow">
         <ReactFlow
-          nodes={nodes}
+          nodes={displayNodes}
           edges={displayEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
