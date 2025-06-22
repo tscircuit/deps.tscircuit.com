@@ -22,6 +22,7 @@ import { CustomGraphNode } from "./custom-graph-node"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, LayoutDashboard } from "lucide-react"
 import { LoadingSpinner } from "./loading-spinner"
+import { getConnectedNodeIds } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -115,6 +116,7 @@ export function DependencyGraph() {
   const [userHasMovedNodes, setUserHasMovedNodes] = useState(false)
   const lastLayoutNodeIds = useRef<Set<string>>(new Set())
   const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("peer")
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null)
   const [visibleCategories, setVisibleCategories] = useState<string[]>(
     ALL_CATEGORIES.filter(
       (c) => c !== "Downstream" && c !== "UI Packages",
@@ -189,6 +191,10 @@ export function DependencyGraph() {
     [],
   )
 
+  const onNodeClick = useCallback((_: any, node: Node) => {
+    setFocusedNodeId(node.id)
+  }, [])
+
   const handleResetLayout = useCallback(() => {
     setIsLayouting(true)
     setNodes((prev) => {
@@ -216,6 +222,22 @@ export function DependencyGraph() {
   const visibleEdges = edges.filter(
     (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target),
   )
+
+  const connectedIds =
+    focusedNodeId && visibleEdges.length > 0
+      ? getConnectedNodeIds(focusedNodeId, visibleEdges)
+      : focusedNodeId
+        ? new Set([focusedNodeId])
+        : null
+
+  const styledNodes = visibleNodes.map((n) => ({
+    ...n,
+    style: {
+      ...n.style,
+      opacity:
+        focusedNodeId && connectedIds && !connectedIds.has(n.id) ? 0.5 : 1,
+    },
+  }))
 
   return (
     <div className="w-full h-screen flex flex-col">
@@ -297,6 +319,16 @@ export function DependencyGraph() {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Reset Layout
           </Button>
+          {focusedNodeId && (
+            <Button
+              onClick={() => setFocusedNodeId(null)}
+              variant="outline"
+              size="sm"
+              className="bg-background text-foreground hover:bg-accent"
+            >
+              Unfocus
+            </Button>
+          )}
         </div>
       </div>
       {error && (
@@ -309,11 +341,12 @@ export function DependencyGraph() {
       )}
       <div className="flex-grow">
         <ReactFlow
-          nodes={visibleNodes}
+          nodes={styledNodes}
           edges={visibleEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
           fitViewOptions={{ padding: 0.2 }} // Add some padding around the fitted view
