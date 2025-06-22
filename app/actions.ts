@@ -105,7 +105,7 @@ async function fetchLastPackageJsonUpdate(
 
 export async function fetchDependencyGraphData(
   repoUrls: string[],
-  onlyPeerDependencies = true,
+  onlyPeerDependencies = false,
 ): Promise<GraphData> {
   const fetchedRepos: FetchedRepoInfo[] = await Promise.all(
     repoUrls.map(async (url) => {
