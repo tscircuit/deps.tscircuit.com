@@ -6,21 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Returns the ids of nodes directly connected to `startId`.
+ * The returned set always includes `startId` itself.
+ */
 export function getConnectedNodeIds(startId: string, edges: Edge[]): Set<string> {
-  const visited = new Set<string>([startId])
-  const queue = [startId]
-  while (queue.length) {
-    const id = queue.shift()!
-    edges.forEach((e) => {
-      if (e.source === id && !visited.has(e.target)) {
-        visited.add(e.target)
-        queue.push(e.target)
-      }
-      if (e.target === id && !visited.has(e.source)) {
-        visited.add(e.source)
-        queue.push(e.source)
-      }
-    })
+  const connected = new Set<string>([startId])
+  for (const e of edges) {
+    if (e.source === startId) connected.add(e.target)
+    if (e.target === startId) connected.add(e.source)
   }
-  return visited
+  return connected
 }
