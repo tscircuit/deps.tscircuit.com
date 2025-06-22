@@ -248,6 +248,13 @@ export function DependencyGraph() {
           ? 0.1
           : (e.style as any)?.opacity ?? 1,
     },
+    labelStyle: {
+      ...(e.labelStyle || {}),
+      opacity:
+        focusedNodeId && e.source !== focusedNodeId && e.target !== focusedNodeId
+          ? 0.1
+          : (e.labelStyle as any)?.opacity ?? 1,
+    },
   }))
 
   return (
