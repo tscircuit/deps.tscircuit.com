@@ -115,7 +115,7 @@ export function DependencyGraph() {
   const [error, setError] = useState<string | null>(null)
   const [userHasMovedNodes, setUserHasMovedNodes] = useState(false)
   const lastLayoutNodeIds = useRef<Set<string>>(new Set())
-  const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("peer")
+  const [dependencyMode, setDependencyMode] = useState<"peer" | "all">("all")
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null)
   const [visibleCategories, setVisibleCategories] = useState<string[]>(
     ALL_CATEGORIES.filter(
