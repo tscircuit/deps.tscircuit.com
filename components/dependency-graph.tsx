@@ -239,6 +239,17 @@ export function DependencyGraph() {
     },
   }))
 
+  const styledEdges = visibleEdges.map((e) => ({
+    ...e,
+    style: {
+      ...(e.style || {}),
+      opacity:
+        focusedNodeId && e.source !== focusedNodeId && e.target !== focusedNodeId
+          ? 0.1
+          : (e.style as any)?.opacity ?? 1,
+    },
+  }))
+
   return (
     <div className="w-full h-screen flex flex-col">
       <div className="p-4 border-b flex justify-between items-center bg-background">
@@ -342,7 +353,7 @@ export function DependencyGraph() {
       <div className="flex-grow">
         <ReactFlow
           nodes={styledNodes}
-          edges={visibleEdges}
+          edges={styledEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
