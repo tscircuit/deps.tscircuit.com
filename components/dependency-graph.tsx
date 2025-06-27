@@ -57,6 +57,7 @@ const REPO_URLS = [
   "https://github.com/tscircuit/jscad-fiber",
   "https://github.com/tscircuit/jscad-electronics",
   "https://github.com/tscircuit/parts-engine",
+  "https://github.com/tscircuit/cli",
 ]
 
 const nodeTypes = {

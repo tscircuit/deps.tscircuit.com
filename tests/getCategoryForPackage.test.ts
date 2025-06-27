@@ -23,6 +23,10 @@ test("maps tscircuit/checks to Core Utility", () => {
   ).toBe("Core Utility")
 })
 
+test("maps @tscircuit/cli to Downstream", () => {
+  expect(getCategoryForPackage("@tscircuit/cli", "cli")).toBe("Downstream")
+})
+
 test("maps tscircuit to Packaged Bundles", () => {
   expect(getCategoryForPackage("tscircuit", "tscircuit")).toBe("Packaged Bundles")
 })
