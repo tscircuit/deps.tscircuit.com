@@ -3,6 +3,7 @@ export const PACKAGE_CATEGORY_MAP: Record<string, string> = {
   "@tscircuit/props": "Specifications",
   "schematic-symbols": "Specifications",
   "@tscircuit/footprinter": "Specifications",
+  "tscircuit/footprinter": "Specifications",
   "jscad-fiber": "Specifications",
   "circuit-to-svg": "Core Utility",
   "jscad-electronics": "UI Packages",

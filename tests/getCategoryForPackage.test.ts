@@ -31,6 +31,12 @@ test("maps tscircuit to Packaged Bundles", () => {
   expect(getCategoryForPackage("tscircuit", "tscircuit")).toBe("Packaged Bundles")
 })
 
+test("maps tscircuit/footprinter to Specifications", () => {
+  expect(
+    getCategoryForPackage("tscircuit/footprinter", "tscircuit/footprinter"),
+  ).toBe("Specifications")
+})
+
 test("falls back to repo name", () => {
   expect(getCategoryForPackage("unknown", "@tscircuit/core")).toBe("Core")
 })
