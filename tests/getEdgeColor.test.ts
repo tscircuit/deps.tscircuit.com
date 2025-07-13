@@ -20,3 +20,11 @@ test("returns red when minor version differs", () => {
 test("returns red when patch diff over 20", () => {
   expect(getEdgeColor("1.0.0", "1.0.30")).toBe("#ef4444");
 });
+
+test("handles non-semver range", () => {
+  const color = getEdgeColor(
+    "https://pkg.pr.new/tscircuit/eval/@tscircuit/eval@90b7d8c",
+    "1.0.0",
+  );
+  expect(color).toBe("#eab308");
+});
