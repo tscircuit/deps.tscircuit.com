@@ -179,7 +179,10 @@ export async function fetchDependencyGraphData(
           const latestAvailableVersion = latestVersionsMap.get(depName)!
 
           try {
-            if (!semver.satisfies(latestAvailableVersion, requiredVersionRange)) {
+            if (
+              semver.validRange(requiredVersionRange) &&
+              !semver.satisfies(latestAvailableVersion, requiredVersionRange)
+            ) {
               status = "STALE_DEPENDENCY"
               break
             }
@@ -232,16 +235,15 @@ export async function fetchDependencyGraphData(
             (r) => r.packageName === depName && !r.error,
           ) // Ensure source node (the dependency) exists and is valid
           if (sourceNodeExists) {
-            const requiredVersionRange = allDependencies[depName]
-            const latestAvailableVersion = latestVersionsMap.get(depName)!
-            const isLatest = semver.satisfies(
-              latestAvailableVersion,
-              requiredVersionRange,
-            )
-            const color = getEdgeColor(
-              requiredVersionRange,
-              latestAvailableVersion,
-            )
+              const requiredVersionRange = allDependencies[depName]
+              const latestAvailableVersion = latestVersionsMap.get(depName)!
+              const rangeValid = semver.validRange(requiredVersionRange)
+              const isLatest =
+                rangeValid &&
+                semver.satisfies(latestAvailableVersion, requiredVersionRange)
+              const color = rangeValid
+                ? getEdgeColor(requiredVersionRange, latestAvailableVersion)
+                : "#eab308"
             edges.push({
               id: `e-${depName}-${nodeId}`, // Edge from dependency to current repo
               source: depName, // Source is the dependency package name

@@ -1,9 +1,14 @@
 import semver from "semver";
 
-export function getEdgeColor(requiredRange: string, latestVersion: string): string {
-  const latest = semver.parse(latestVersion);
-  const required = semver.minVersion(requiredRange);
-  if (!latest || !required) return "#eab308"; // default yellow/orange
+export function getEdgeColor(
+  requiredRange: string,
+  latestVersion: string,
+): string {
+  if (!semver.validRange(requiredRange) || !semver.valid(latestVersion)) {
+    return "#eab308"; // default yellow/orange
+  }
+  const latest = semver.parse(latestVersion)!;
+  const required = semver.minVersion(requiredRange)!;
 
   if (semver.eq(required, latest)) {
     return "#3b82f6"; // blue for latest
