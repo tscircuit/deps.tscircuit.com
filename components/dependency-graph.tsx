@@ -36,7 +36,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ALL_CATEGORIES } from "@/lib/categories"
+import { ALL_CATEGORIES, UPSTREAM_CATEGORY_URLS } from "@/lib/categories"
 
 const REPO_URLS = [
   "https://github.com/tscircuit/tscircuit",
@@ -49,6 +49,7 @@ const REPO_URLS = [
   "https://github.com/tscircuit/tscircuit-autorouter",
   "https://github.com/tscircuit/tscircuit.com",
   "https://github.com/tscircuit/svg.tscircuit.com",
+  "https://github.com/tscircuit/browser-preview.tscircuit.com",
   "https://github.com/tscircuit/runframe",
   "https://github.com/tscircuit/eval",
   "https://github.com/tscircuit/easyeda-converter",
@@ -121,7 +122,7 @@ export function DependencyGraph() {
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null)
   const [visibleCategories, setVisibleCategories] = useState<string[]>(
     ALL_CATEGORIES.filter(
-      (c) => c !== "Downstream" && c !== "UI Packages",
+      (c) => c !== "Downstream" && c !== "UI Packages" && c !== "Upstream",
     ),
   )
 
@@ -217,9 +218,11 @@ export function DependencyGraph() {
     )
   }
 
-  const visibleNodes = nodes.filter((n) =>
-    visibleCategories.includes(n.data.category),
-  )
+  const isUpstreamOnly = visibleCategories.includes("Upstream")
+  const upstreamSet = new Set(UPSTREAM_CATEGORY_URLS as readonly string[])
+  const visibleNodes = isUpstreamOnly
+    ? nodes.filter((n) => upstreamSet.has(n.data.url))
+    : nodes.filter((n) => visibleCategories.includes(n.data.category))
   const visibleNodeIds = new Set(visibleNodes.map((n) => n.id))
   const visibleEdges = edges.filter(
     (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target),
