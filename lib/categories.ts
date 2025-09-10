@@ -27,6 +27,7 @@ export const ALL_CATEGORIES = [
   "UI Packages",
   "Packaged Bundles",
   "Downstream",
+  "Upstream",
 ] as const
 
 export function getCategoryForPackage(pkg: string, repo: string): string {
@@ -45,4 +46,14 @@ export const CATEGORY_COLORS: Record<string, string> = {
   "Packaged Bundles": "bg-chart-5 text-white",
   Downstream:
     "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
+  Upstream: "bg-blue-600 text-white",
 }
+
+// URLs for the custom "Upstream" category filter
+export const UPSTREAM_CATEGORY_URLS = [
+  "https://github.com/tscircuit/core",
+  "https://github.com/tscircuit/tscircuit",
+  "https://github.com/tscircuit/svg.tscircuit.com",
+  "https://github.com/tscircuit/browser-preview.tscircuit.com",
+  "https://github.com/tscircuit/eval",
+] as const
