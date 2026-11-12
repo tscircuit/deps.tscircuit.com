@@ -8,7 +8,10 @@ export function getEdgeColor(
     return "#eab308"; // default yellow/orange
   }
   const latest = semver.parse(latestVersion)!;
-  const required = semver.minVersion(requiredRange)!;
+  const required = semver.minVersion(requiredRange);
+  if (!required) {
+    return "#eab308"; // default yellow/orange for an empty range
+  }
 
   if (semver.eq(required, latest)) {
     return "#3b82f6"; // blue for latest
