@@ -225,8 +225,12 @@ export async function fetchDependencyGraphData(
 
     // Create edges
     if (repo.packageName && !repo.error) {
-      const allDependencies = { ...repo.dependencies, ...repo.devDependencies }
       const peerDeps = repo.peerDependencies || {}
+      const allDependencies = {
+        ...peerDeps,
+        ...repo.dependencies,
+        ...repo.devDependencies,
+      }
       for (const depName in allDependencies) {
         const included = onlyPeerDependencies ? depName in peerDeps : true
         if (latestVersionsMap.has(depName) && included) {
